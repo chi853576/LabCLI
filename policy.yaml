@@ -1,0 +1,38 @@
+# Policy Configuration
+# Format: YAML
+
+# Users mapping: osUserName -> role
+users:
+  # Linux/macOS: username (e.g., alice, bob)
+  # Windows: DOMAIN\Username or Username (e.g., ACME\bob or bob)
+  alice: admin
+  bob: operator
+  charlie: auditor
+  
+  # Add your team members here:
+  # your_os_username: admin
+
+# Roles mapping: role -> list of allowed commands
+roles:
+  # Admin: full access
+  admin:
+    - init
+    - backup
+    - list-snapshots
+    - verify
+    - restore
+    - audit-verify
+  
+  # Operator: can backup and restore
+  operator:
+    - backup
+    - list-snapshots
+    - verify
+    - restore
+    - audit-verify
+  
+  # Auditor: read-only access
+  auditor:
+    - list-snapshots
+    - verify
+    - audit-verify
