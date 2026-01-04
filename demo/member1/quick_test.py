@@ -13,7 +13,7 @@ import shutil
 # Add src to path
 sys.path.insert(
     0,
-    os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src')
+    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'src')
 )
 
 from core.chunker import chunk_file
