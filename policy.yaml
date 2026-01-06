@@ -5,9 +5,11 @@
 users:
   # Linux/macOS: username (e.g., alice, bob)
   # Windows: DOMAIN\Username or Username (e.g., ACME\bob or bob)
+  DESKTOP-EV3RM6E\ACER: admin
   alice: admin
   bob: operator
   charlie: auditor
+  
   
   # Add your team members here:
   # your_os_username: admin
