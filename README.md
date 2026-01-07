@@ -131,3 +131,61 @@ File `interfaces.py` định nghĩa tất cả function signatures và data stru
 ### Hash algorithm: SHA-256
 **Lý do:**
 - thầy yêu cầu
+
+## 🔐 Thuật toán xây dựng Merkle Tree
+### Tổng quan
+Mỗi snapshot được gắn với một Merkle root, là một giá trị hash của toàn bộ nội dung của snapshot. Cụ thể, ở hàm
+```python
+def compute_merkle_root(manifest: dict) -> str:
+```
+Ta thấy `manifest` chứa toàn bộ cấu trúc của snapshot. Khi truyền vào hàm `compute_merkle_root` thì `manifest` này sẽ được băm (hash) lại thành một chuỗi dạng string duy nhất.
+
+### Chi tiết thuật toán
+- Đầu tiên, mỗi file trong `manifest` sẽ được băm thông qua hàm `_hash_file_entry(file)`. Cụ thể, việc băm sẽ thực hiện thông qua chương trình sau:
+```python
+def _hash_file_entry(file_entry: dict) -> str:
+    data = file_entry["path"] + ":" + "".join(file_entry["chunks"])
+    return hashlib.sha256(data.encode("utf-8")).hexdigest()
+```
+Tại đây, chuỗi `data` sẽ bao gồm đường dẫn của tệp tin `file_entry["path"]`, theo sau đó là dấu ":", và cuối cùng là các chunk của tệp tin. Sau đó, chuỗi `data` này sẽ được băm bởi thuật toán `sha256` và hàm sẽ trả về giá trị là chính kết quả băm đó.
+- Sau khi thực hiện quá trình băm các file, các giá trị này sẽ được đưa vào mảng `file_hashes` như sau: 
+```python
+file_hashes = [_hash_file_entry(file) for file in manifest["files"]]
+```
+Đây chính là các node lá trong Merkle tree, chứa các giá trị đã băm của các file. Hay nói cách khác, mỗi phần tử trong `file_hashses` chính là một node lá. Dĩ nhiên, thứ tự của các chuỗi hash của các file này đã được đảm bảo tính canonical trước đó ở trong hàm:
+```python
+def create_manifest(file_entries: List[FileEntry]) -> dict:
+```
+- Tiếp theo, chương trình sẽ tiến hành tạo lần lượt các node có độ sâu thấp hơn so với các node lá, cho tới khi tạo được node gốc thông qua vòng lặp:
+```python
+while len(file_hashes) > 1:
+  if len(file_hashes) % 2 != 0:
+      file_hashes.append(file_hashes[-1])
+  
+  new_level = []
+  for i in range(0, len(file_hashes), 2):
+      combined = file_hashes[i] + file_hashes[i + 1]
+      new_hash = hashlib.sha256(combined.encode("utf-8")).hexdigest()
+      new_level.append(new_hash)
+  
+  file_hashes = new_level
+```
+Bởi vì trong quá trình lặp, có thể số node hiện hành (hay số phần tử của `file_hashes`) không phải là số chẵn, khiến cho Merkle tree không đảm bảo tính chất của một cây nhị phân. Nếu trường hợp đó xảy ra, ta sẽ tiến hành nhân đôi thêm node cuối, hay bổ sung thêm một phần tử có giá trị bằng với giá trị của phần tử cuối cùng trong mảng `file_hashes` vào trong mảng `file_hashes`
+```python
+if len(file_hashes) % 2 != 0:
+  file_hashes.append(file_hashes[-1])
+```
+- Tiếp theo, hệ thống sẽ tạo các node cha, thông qua việc ghép lần lượt 2 node con kề nhau và băm chúng bằng thuật toán SHA256 và tạm thời lưu chúng vào mảng `new_level`. Tới khi việc tạo các node cha hoàn tất thì gán `file_hashes` bằng `new_level`.
+```python
+new_level = []
+for i in range(0, len(file_hashes), 2):
+    combined = file_hashes[i] + file_hashes[i + 1]
+    new_hash = hashlib.sha256(combined.encode("utf-8")).hexdigest()
+    new_level.append(new_hash)
+
+file_hashes = new_level
+```
+- Quá trình tạo các node có mức thấp hơn này sẽ kết thúc khi mảng `file_hashes` chỉ còn lại đúng 1 phần tử, đó cũng chính là node gốc (Root node) của Merkel Tree.
+```python
+while len(file_hashes) > 1:
+```
