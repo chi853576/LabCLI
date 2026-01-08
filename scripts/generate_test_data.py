@@ -43,8 +43,8 @@ def generate_test_data(output_dir="dataset", num_files=2000, total_size_mb=200):
         # Vary file size (50% to 150% of average)
         size = random.randint(int(avg_size * 0.5), int(avg_size * 1.5))
         
-        # Choose file type
-        file_type = random.choice(['text', 'binary', 'json', 'log'])
+        # Choose file type (now includes config)
+        file_type = random.choice(['text', 'binary', 'json', 'log', 'config'])
         
         if file_type == 'text':
             subdir = 'docs'
@@ -60,6 +60,12 @@ def generate_test_data(output_dir="dataset", num_files=2000, total_size_mb=200):
             # Generate simple JSON
             json_data = '{"id": %d, "data": "%s"}' % (i, random_text(size - 50))
             data = json_data.encode('utf-8')
+        elif file_type == 'config':
+            subdir = 'config'
+            ext = '.cfg'
+            # Generate config-like data
+            config_data = f"[section_{i}]\n" + random_text(size - 20)
+            data = config_data.encode('utf-8')
         else:  # log
             subdir = 'logs'
             ext = '.log'
