@@ -16,6 +16,8 @@ import time
 import os
 from src.interfaces import SnapshotMetadata
 import json
+class RollbackDetected(Exception):
+    pass
 def create_snapshot(store_path: str, manifest: dict, label: str, prev_root: str = "") -> str:
     """
     Tạo snapshot metadata và lưu vào store.
@@ -77,7 +79,7 @@ def load_snapshot(store_path: str, snapshot_id: str) -> SnapshotMetadata:
     with open(snapshot_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     
-    return SnapshotMetadata(
+    current = SnapshotMetadata(
         id=data["id"],
         label=data["label"],
         timestamp=data["timestamp"],
@@ -85,6 +87,21 @@ def load_snapshot(store_path: str, snapshot_id: str) -> SnapshotMetadata:
         prev_root=data["prev_root"],
         manifest_hash=data["manifest_hash"]
     )
+
+    # ===== CHỐNG ROLLBACK =====
+    if current.prev_root:
+        snapshots = list_snapshots(store_path)
+        previous = None
+        for s in snapshots:
+            if s.timestamp < current.timestamp:
+                previous = s
+
+        if previous and current.prev_root != previous.merkle_root:
+            raise RollbackDetected(
+                f"Rollback detected at snapshot {current.id}"
+            )
+
+    return current
 
 
 def list_snapshots(store_path: str) -> List[SnapshotMetadata]:
