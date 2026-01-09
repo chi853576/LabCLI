@@ -237,17 +237,17 @@ def serialize_manifest(manifest: dict) -> str:
 
 2. Xây dựng Binary Merkle Tree:
    
-   Level 0 (leaves):  [H1, H2, H3, H4, H5]
+   Level 0 (leaves):  [H1, H2, H3, H4, ..., Hn]
                        ↓ (nếu lẻ, duplicate cuối)
-                      [H1, H2, H3, H4, H5, H5]
+                      [H1, H2, H3, H4, ..., Hn, Hn]
    
-   Level 1:           [H(H1+H2), H(H3+H4), H(H5+H5)]
-                       ↓
-   Level 2:           [H(H12+H34), H(H55+H55)]
+   Level 1:           [H(H1+H2), H(H3+H4), ..., H(H{n-1}+Hn)]
                        ↓ (duplicate nếu lẻ)
-                      [H(H12+H34), H(H55+H55), H(H55+H55)]
+   Level 2:           [H(H12+H34),..., H(H{n-3}{n-2}+H{n-1}n)]
+                       ↓ (duplicate nếu lẻ)
+                      ...
    
-   Level 3 (root):    [H(H1234+H5555)]
+   Level m (root):    [H(H1234...{n/2}+H{n/2 +1}{n/2 +2}...n)]
                        ↓
                     Merkle Root
 
