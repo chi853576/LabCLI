@@ -61,13 +61,14 @@ def create_snapshot(store_path: str, manifest: dict, label: str, prev_root: str 
     return snapshot_id
 
 
-def load_snapshot(store_path: str, snapshot_id: str) -> SnapshotMetadata:
+def load_snapshot(store_path: str, snapshot_id: str, skip_rollback_check: bool = False) -> SnapshotMetadata:
     """
     Load snapshot metadata từ store.
     
     Args:
         store_path: Đường dẫn đến backup store
         snapshot_id: Snapshot ID
+        skip_rollback_check: If True, skip rollback check (used internally by list_snapshots)
     
     Returns:
         SnapshotMetadata object
@@ -89,7 +90,8 @@ def load_snapshot(store_path: str, snapshot_id: str) -> SnapshotMetadata:
     )
 
     # ===== CHỐNG ROLLBACK =====
-    if current.prev_root:
+    # Skip rollback check when called from list_snapshots to avoid infinite recursion
+    if not skip_rollback_check and current.prev_root:
         snapshots = list_snapshots(store_path)
         previous = None
         for s in snapshots:
@@ -123,7 +125,8 @@ def list_snapshots(store_path: str) -> List[SnapshotMetadata]:
     for filename in os.listdir(snapshots_dir):
         if filename.endswith(".json") and filename.startswith("snapshot_"):
             snapshot_id = filename[:-5]  # Remove .json
-            snapshot = load_snapshot(store_path, snapshot_id)
+            # Skip rollback check to avoid infinite recursion
+            snapshot = load_snapshot(store_path, snapshot_id, skip_rollback_check=True)
             snapshots.append(snapshot)
     
     snapshots.sort(key=lambda s: s.timestamp)

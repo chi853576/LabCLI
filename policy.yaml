@@ -6,6 +6,7 @@ users:
   # Linux/macOS: username (e.g., alice, bob)
   # Windows: DOMAIN\Username or Username (e.g., ACME\bob or bob)
   DESKTOP-EV3RM6E\ACER: admin
+  DESKTOP-ANDRHOJ\DELL: admin 
   alice: admin
   bob: operator
   charlie: auditor
